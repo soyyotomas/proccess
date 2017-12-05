@@ -5,87 +5,61 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.boot.model.User;
+import com.boot.persistence.UserDao;
 
 @Service("userService")
 public class UserServiceImpl implements UserService {
 
-	private static final AtomicLong counter = new AtomicLong();
-
-	private static List<User> users;
-
-	static {
-		users = populateDummyUsers();
-	}
+	@Autowired
+	UserDao userDao;
 
 	@Override
 	public User findById(long id) {
-		for (User user : users) {
-			if (user.getId() == id) {
-				return user;
-			}
-		}
-		return null;
+		User user = null;
+		user = userDao.findById(id);
+		return user;
 	}
 
 	@Override
 	public User findByName(String name) {
-		for (User user : users) {
-			if (user.getName().equalsIgnoreCase(name)) {
-				return user;
-			}
-		}
-		return null;
+		User user = null;
+		user = userDao.findByName(name);
+		return user;
 	}
 
 	@Override
 	public void saveUser(User user) {
-		user.setId(counter.incrementAndGet());
-		users.add(user);
+		userDao.saveUser(user);
 	}
 
 	@Override
 	public void updateUser(User user) {
-		int index = users.indexOf(user);
-		users.set(index, user);
+		userDao.updateUser(user);
 	}
 
 	@Override
 	public void deleteUserById(long id) {
-		for (Iterator<User> iterator = users.iterator(); iterator.hasNext();) {
-			User user = (User) iterator.next();
-			if (user.getId() == id) {
-				iterator.remove();
-			}
-		}
-
+		userDao.deleteUserById(id);
 	}
 
 	@Override
 	public List<User> findAllUsers() {
-		return users;
+		return userDao.findAllUsers();
 	}
 
 	@Override
 	public void deleteAllUsers() {
-		users.clear();
+		userDao.deleteAllUsers();
 
 	}
 
 	@Override
 	public boolean isUserExist(User user) {
-		return findByName(user.getName()) != null;
+		return userDao.isUserExist(user);
 	}
 
-	private static List<User> populateDummyUsers() {
-		List<User> users = new ArrayList<>();
-		users.add(new User(counter.incrementAndGet(), "Sam", 30, 70000));
-		users.add(new User(counter.incrementAndGet(), "Tom", 40, 50000));
-		users.add(new User(counter.incrementAndGet(), "Jerome", 45, 30000));
-		users.add(new User(counter.incrementAndGet(), "Silvia", 50, 40000));
-
-		return users;
-	}
 }
