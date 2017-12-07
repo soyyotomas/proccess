@@ -3,7 +3,6 @@ package com.boot.persistence;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
 import org.bson.Document;
@@ -16,12 +15,10 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Updates;
 
 @Repository
 public class UserDaoImpl implements UserDao {
 	private static final Logger objLog = Logger.getLogger(UserDaoImpl.class);
-	private static final AtomicLong counter = new AtomicLong();
 	public static final String URL = "localhost";
 
 	public MongoClient connection = ConexionMongoDB.getConnection(URL);
@@ -38,12 +35,15 @@ public class UserDaoImpl implements UserDao {
 		whereQuery.put("id", id);
 		FindIterable<Document> cursor3 = collection.find(whereQuery);
 		// Getting the iterator
-		Iterator itup = cursor3.iterator();
+		Iterator<Document> itup = cursor3.iterator();
 
 		while (itup.hasNext()) {
-			Document userDoc = (Document) itup.next();
+			Document userDoc = itup.next();
 			user = new User();
-			user.setAge(userDoc.getInteger("id", 0));
+			user.setId(userDoc.getLong("id"));
+			user.setAge(userDoc.getInteger("age"));
+			user.setName(userDoc.getString("name"));
+			user.setSalary(userDoc.getDouble("salary"));
 		}
 		return user;
 	}
@@ -58,12 +58,15 @@ public class UserDaoImpl implements UserDao {
 		whereQuery.put("name", name);
 		FindIterable<Document> cursor3 = collection.find(whereQuery);
 		// Getting the iterator
-		Iterator itup = cursor3.iterator();
+		Iterator<Document> itup = cursor3.iterator();
 
 		while (itup.hasNext()) {
 			Document userDoc = (Document) itup.next();
 			user = new User();
-			user.setAge(userDoc.getInteger("id", 0));
+			user.setId(userDoc.getLong("id"));
+			user.setAge(userDoc.getInteger("age"));
+			user.setName(userDoc.getString("name"));
+			user.setSalary(userDoc.getDouble("salary"));
 		}
 		return user;
 	}
@@ -71,15 +74,17 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public void saveUser(User user) {
 		objLog.info("------ SAVE USER ----------------");
-		Document document = new Document("id", counter.incrementAndGet()).append("name", user.getName())
-				.append("age", user.getAge()).append("salary", user.getSalary());
+		Document document = new Document("id", user.getId()).append("name", user.getName()).append("age", user.getAge())
+				.append("salary", user.getSalary());
 		collection.insertOne(document);
 	}
 
 	@Override
 	public void updateUser(User user) {
 		objLog.info("------ UPDATE USER ----------------");
-		collection.updateOne(Filters.eq("id", user.getId()), Updates.set("name", user.getName()));
+		Document documentUpdate = new Document("id", user.getId()).append("name", user.getName())
+				.append("age", user.getAge()).append("salary", user.getSalary());
+		collection.replaceOne(Filters.eq("id", user.getId()), documentUpdate);
 		System.out.println("Document updated successfully");
 
 	}
@@ -87,7 +92,7 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public void deleteUserById(long id) {
 		objLog.info("------ DELETE USER BY ID ----------------");
-		collection.deleteOne(Filters.eq("id", 5));
+		collection.deleteOne(Filters.eq("id", id));
 		System.out.println("Document deleted successfully");
 	}
 
@@ -97,10 +102,17 @@ public class UserDaoImpl implements UserDao {
 		List<User> listUser = new ArrayList<User>();
 		// Getting the iterate object
 		FindIterable<Document> iterUsers = collection.find();
-		Iterator it = iterUsers.iterator();
+		Iterator<Document> it = iterUsers.iterator();
 
 		while (it.hasNext()) {
-			User user = (User) it.next();
+			Document documentUser = (Document) it.next();
+			User user = new User();
+
+			user.setId(documentUser.getLong("id"));
+			user.setName(documentUser.getString("name"));
+			user.setAge(documentUser.getInteger("age", 18));
+			user.setSalary(documentUser.getDouble("salary"));
+
 			listUser.add(user);
 		}
 		return listUser;
@@ -109,7 +121,16 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public void deleteAllUsers() {
 		objLog.info("------ DELETING ALL USER ----------------");
-		((Document) collection).remove(new BasicDBObject());
+		FindIterable<Document> iterUsers = collection.find();
+		Iterator<Document> it = iterUsers.iterator();
+
+		while (it.hasNext()) {
+			Document documentUser = (Document) it.next();
+			User user = new User();
+
+			user.setId(documentUser.getLong("id"));
+			collection.deleteOne(Filters.eq("id", user.getId()));
+		}
 
 	}
 

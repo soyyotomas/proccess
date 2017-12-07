@@ -1,8 +1,8 @@
 package com.boot.test;
 
-import java.util.List;
 import java.net.URI;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.springframework.web.client.RestTemplate;
 
@@ -17,8 +17,8 @@ public class SpringBootRestTestClient {
 		System.out.println("Testing listAllUser API......");
 
 		RestTemplate restTemplate = new RestTemplate();
-		List<LinkedHashMap<String, Object>> userMap = restTemplate.getForObject(REST_SERVICE_URI + "/user/",
-				List.class);
+		@SuppressWarnings("unchecked")
+		List<LinkedHashMap<String, Object>> userMap = restTemplate.getForObject(REST_SERVICE_URI + "/user/", List.class);
 
 		if (userMap != null) {
 			for (LinkedHashMap<String, Object> map : userMap) {
